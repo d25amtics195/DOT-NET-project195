@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GlassCRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#f4f6ff; --muted:rgba(244,246,255,.65); --glass:rgba(255,255,255,.12); --glass-strong:rgba(255,255,255,.2);
+    --edge:rgba(255,255,255,.28); --high:#ff7a90; --medium:#ffcf6e; --low:#6ee7b7; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; color:var(--ink); font-family:"Sora",system-ui,"Segoe UI",sans-serif; position:relative; overflow-x:hidden;
+    background:linear-gradient(135deg,#1b1464 0%,#5b2a9e 45%,#0e7490 100%) fixed; }
+  body::before,body::after { content:""; position:fixed; border-radius:50%; filter:blur(40px); z-index:0; }
+  body::before { width:420px; height:420px; background:#ff5fa2; top:-120px; left:-100px; opacity:.55; }
+  body::after { width:480px; height:480px; background:#22d3ee; bottom:-160px; right:-120px; opacity:.45; }
+  #root { position:relative; z-index:1; }
+  .glass { background:var(--glass); border:1px solid var(--edge); border-radius:22px; backdrop-filter:blur(22px) saturate(160%);
+    -webkit-backdrop-filter:blur(22px) saturate(160%); box-shadow:0 20px 50px rgba(10,5,50,.35), inset 0 1px 0 rgba(255,255,255,.35); }
+  h1,h2,h3 { margin:0; letter-spacing:-.02em; }
+  .hint,.muted { color:var(--muted); }
+  /* layout: sidebar + content */
+  .app { display:grid; grid-template-columns:260px minmax(0,1fr); gap:20px; padding:20px; min-height:100vh; }
+  .side { position:sticky; top:20px; height:calc(100vh - 40px); padding:22px 16px; display:flex; flex-direction:column; gap:18px; overflow:auto; }
+  .brand { font-weight:700; font-size:1.35rem; padding:0 8px; }
+  .who { display:flex; align-items:center; gap:12px; padding:0 8px; }
+  .who small { display:block; color:var(--muted); font-size:.8rem; }
+  .side nav { display:grid; gap:4px; }
+  .side nav a,.out { display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:14px; border:1px solid transparent;
+    color:var(--ink); text-decoration:none; font:inherit; font-size:.95rem; background:none; cursor:pointer; width:100%; }
+  .side nav a:hover,.out:hover { background:var(--glass); }
+  .side nav a.on { background:var(--glass-strong); border-color:var(--edge); font-weight:600; }
+  .out { margin-top:auto; }
+  .top { display:flex; align-items:center; gap:14px; padding:14px 22px; margin-bottom:20px; }
+  .top h2 { font-size:1.25rem; } .date { margin-left:auto; color:var(--muted); font-size:.85rem; }
+  .burger { display:none; border:1px solid var(--edge); background:var(--glass); color:var(--ink); border-radius:12px; padding:6px 12px; font-size:1.1rem; cursor:pointer; }
+  /* tiles */
+  .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:16px; margin-bottom:20px; }
+  .tile { position:relative; overflow:hidden; padding:20px 22px; border-radius:20px; border:1px solid var(--edge);
+    backdrop-filter:blur(22px); -webkit-backdrop-filter:blur(22px); box-shadow:0 14px 34px rgba(10,5,50,.3), inset 0 1px 0 rgba(255,255,255,.35); }
+  .tile b { display:block; font-size:2.4rem; line-height:1.1; } .tile span { display:block; margin-top:4px; opacity:.9; }
+  .t1 { background:linear-gradient(135deg,rgba(255,107,107,.6),rgba(255,107,107,.2)); }
+  .t2 { background:linear-gradient(135deg,rgba(34,211,238,.55),rgba(34,211,238,.18)); }
+  .t3 { background:linear-gradient(135deg,rgba(251,191,36,.55),rgba(251,191,36,.18)); }
+  .t4 { background:linear-gradient(135deg,rgba(52,211,153,.55),rgba(52,211,153,.18)); }
+  .more { display:block; margin:16px -22px -20px; padding:9px 22px; background:rgba(0,0,0,.18); color:#fff; text-decoration:none; font-size:.85rem; }
+  .more:hover { background:rgba(0,0,0,.28); }
+  /* cards, tables */
+  .cols { display:grid; grid-template-columns:2fr 1fr; gap:20px; margin-bottom:20px; } .cols.even { grid-template-columns:1fr 1fr; }
+  .card { padding:22px; } .card h3 { font-size:1.05rem; margin-bottom:14px; }
+  .row { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+  .row h3 { margin:0; } .row input { max-width:240px; }
+  .tw { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:.92rem; }
+  th { text-align:left; color:var(--muted); font-weight:600; font-size:.8rem; padding:10px 12px; border-bottom:1px solid var(--edge); white-space:nowrap; }
+  td { padding:12px; border-bottom:1px solid rgba(255,255,255,.1); } tr:last-child td { border-bottom:0; }
+  tbody tr:hover { background:rgba(255,255,255,.07); } td.empty { text-align:center; color:var(--muted); padding:28px; }
+  .who2 { display:flex; align-items:center; gap:12px; font-weight:600; }
+  .avatar { width:36px; height:36px; border-radius:50%; flex:none; display:grid; place-items:center; font-weight:700;
+    background:linear-gradient(135deg,rgba(255,255,255,.35),rgba(255,255,255,.1)); border:1px solid var(--edge); }
+  .avatar.big { width:48px; height:48px; font-size:1.2rem; } .avatar.huge { width:84px; height:84px; font-size:2rem; margin:0 auto 14px; }
+  .pill { padding:3px 10px; border-radius:999px; font-size:.78rem; border:1px solid var(--edge); white-space:nowrap; }
+  .pill.ok { color:var(--low); } .pill.low { color:var(--medium); } .pill.out { color:var(--high); }
+  .del { border:0; background:none; color:var(--ink); cursor:pointer; font-size:1.1rem; opacity:.6; } .del:hover { opacity:1; }
+  .bar { display:grid; grid-template-columns:120px 1fr auto; gap:10px; align-items:center; margin-bottom:12px; font-size:.88rem; }
+  .bar span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .track { height:10px; border-radius:99px; background:rgba(255,255,255,.12); }
+  .track i { display:block; height:100%; border-radius:99px; background:linear-gradient(90deg,#fff,#9fd8ff); }
+  .alert { display:flex; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.1); }
+  .alert:last-child { border-bottom:0; }
+  /* forms */
+  .stack { display:grid; gap:12px; } label { font-size:.8rem; color:var(--muted); display:grid; gap:6px; }
+  input,button { font:inherit; color:var(--ink); }
+  input { padding:12px 14px; border-radius:14px; border:1px solid var(--edge); background:rgba(255,255,255,.1); outline:none; min-width:0; width:100%; }
+  input::placeholder { color:var(--muted); } input[readonly] { opacity:.6; }
+  input:focus-visible,button:focus-visible,a:focus-visible { outline:2px solid #fff; outline-offset:2px; }
+  button.add { padding:12px; border:0; border-radius:14px; font-weight:700; cursor:pointer; background:linear-gradient(135deg,#fff,#cfe3ff); color:#2a1a6e; transition:transform .15s; }
+  button.add:hover { transform:translateY(-2px); }
+  /* login / signup */
+  .authwrap { min-height:100vh; max-width:1100px; margin:0 auto; padding:40px 24px; display:grid; grid-template-columns:1.1fr 1fr; gap:48px; align-items:center; }
+  .hero h1 { font-size:2.8rem; line-height:1.1; margin:18px 0 14px; } .hero p { color:var(--muted); font-size:1.05rem; max-width:420px; }
+  .authform { padding:32px; } .authform h2 { font-size:1.6rem; margin-bottom:4px; }
+  .alt { text-align:center; color:var(--muted); font-size:.9rem; } .alt a { color:#fff; font-weight:600; }
+  #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); padding:12px 20px; z-index:30; display:none; }
+  @media (max-width:1100px) { .cols,.cols.even { grid-template-columns:1fr; } }
+  @media (max-width:900px) {
+    .app { grid-template-columns:1fr; } .burger { display:block; }
+    .side { position:fixed; left:-300px; top:0; width:270px; height:100vh; z-index:20; border-radius:0 22px 22px 0; transition:left .25s; }
+    body.menu .side { left:0; }
+    .authwrap { grid-template-columns:1fr; gap:24px; } .hero h1 { font-size:2.1rem; } .date { display:none; }
+  }
+  @media (prefers-reduced-motion:reduce) { * { transition:none !important; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="toast" class="glass" role="status"></div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const inr = n => "₹" + Number(n).toLocaleString("en-IN");
+  const sum = (l, k) => l.reduce((a, x) => a + Number(x[k]), 0);
+  let token = sessionStorage.getItem("token") || "", me = null, filterText = "";
+
+  function toast(t) {
+    const el = $("toast"); el.textContent = t; el.style.display = "block";
+    clearTimeout(toast.t); toast.t = setTimeout(() => el.style.display = "none", 2600);
+  }
+  async function api(path, method = "GET", body) {
+    const r = await fetch("/api" + path, { method, headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: body ? JSON.stringify(body) : undefined });
+    const data = r.status === 204 ? null : await r.json().catch(() => null);
+    if (r.status === 401 && token) { logout(); throw new Error("Session expired. Please log in again."); }
+    if (!r.ok) throw new Error((data && data.error) || "Something went wrong.");
+    return data;
+  }
+  function logout() { token = ""; me = null; sessionStorage.removeItem("token"); location.hash = "#/login"; route(); }
+
+  // ---- icons + shell (sidebar + top bar) ----
+  const icons = {
+    dashboard: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+    customers: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.6a3.5 3.5 0 010 6.8M18 14.4c2 .7 3.5 2.4 3.5 5.6"/>',
+    products: '<path d="M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8"/>',
+    employees: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M3 13h18"/>',
+    profile: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
+    logout: '<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>'
+  };
+  const ic = n => `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icons[n]}</svg>`;
+  const titles = { dashboard: "Dashboard", customers: "Customers", products: "Products", employees: "Employees", profile: "Profile" };
+
+  function shell(page) {
+    $("root").className = "app";
+    $("root").innerHTML = `
+      <aside class="side glass">
+        <div class="brand">GlassCRM</div>
+        <div class="who"><div class="avatar big">${esc(me.name[0].toUpperCase())}</div><div><b>${esc(me.name)}</b><small>${esc(me.shop || "Your shop")}</small></div></div>
+        <input id="q" placeholder="Quick search customers…" aria-label="Quick search customers">
+        <nav>${Object.keys(titles).map(p => `<a href="#/${p}" class="${p === page ? "on" : ""}">${ic(p)}${titles[p]}</a>`).join("")}</nav>
+        <button class="out" onclick="logout()">${ic("logout")}Log out</button>
+      </aside>
+      <div class="main">
+        <div class="top glass"><button class="burger" onclick="document.body.classList.toggle('menu')" aria-label="Menu">☰</button>
+          <h2>${titles[page]}</h2><span class="date">${new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span></div>
+        <div id="view"></div>
+      </div>`;
+    $("q").onkeydown = e => {
+      if (e.key !== "Enter") return;
+      filterText = e.target.value; const same = location.hash === "#/customers";
+      location.hash = "#/customers"; if (same) route();
+    };
+  }
+
+  // ---- helpers ----
+  const nameCell = n => `<div class="who2"><div class="avatar">${esc(String(n)[0].toUpperCase())}</div>${esc(n)}</div>`;
+  const table = (heads, rows) => `<div class="tw"><table><thead><tr>${heads.map(h => `<th>${h}</th>`).join("")}</tr></thead>
+    <tbody>${rows || `<tr><td colspan="${heads.length}" class="empty">Nothing here yet. Add your first entry.</td></tr>`}</tbody></table></div>`;
+  const stockPill = s => s <= 0 ? `<span class="pill out">Out of stock</span>` : s <= 15 ? `<span class="pill low">Low stock</span>` : `<span class="pill ok">In stock</span>`;
+  const bars = items => { const m = Math.max(1, ...items.map(i => i[1]));
+    return items.map(i => `<div class="bar"><span>${esc(i[0])}</span><div class="track"><i style="width:${i[1] / m * 100}%"></i></div><b>${esc(i[2])}</b></div>`).join("") || `<p class="hint">No data yet.</p>`; };
+
+  // ---- dashboard ----
+  async function showDashboard() {
+    const [cu, pr, em] = await Promise.all([api("/customers"), api("/products"), api("/employees")]);
+    const low = pr.filter(p => p.stock <= 15);
+    const tiles = [["t1", "Customers", cu.length, "customers", "View customers"], ["t2", "Products", pr.length, "products", "View products"],
+      ["t3", "Employees", em.length, "employees", "View employees"], ["t4", "Low stock items", low.length, "products", "Check stock"]];
+    const counts = {}; cu.forEach(c => counts[c.product] = (counts[c.product] || 0) + 1);
+    const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([n, v]) => [n, v, v + (v === 1 ? " sale" : " sales")]);
+    $("view").innerHTML = `
+      <div class="tiles">${tiles.map(t => `<div class="tile ${t[0]}"><b>${t[2]}</b><span>${t[1]}</span><a class="more" href="#/${t[3]}">${t[4]} ➜</a></div>`).join("")}</div>
+      <section class="glass card" style="margin-bottom:20px"><h3>Welcome back, ${esc(me.name)}</h3>
+        <p class="hint" style="margin:0">Here is how ${esc(me.shop || "your shop")} looks today: ${cu.length} customers, ${pr.length} products and a monthly payroll of ${inr(sum(em, "salary"))}.</p></section>
+      <div class="cols">
+        <section class="glass card"><div class="row"><h3>Recent customers</h3><a class="alt" href="#/customers">See all</a></div>
+          ${table(["Customer", "Product purchased", "Visit date"], cu.slice(-5).reverse().map(c => `<tr><td>${nameCell(c.name)}</td><td>${esc(c.product)}</td><td>${esc(c.date || "—")}</td></tr>`).join(""))}</section>
+        <section class="glass card"><h3>Low stock alerts</h3>
+          ${low.map(p => `<div class="alert"><span>${esc(p.name)}</span><span>${stockPill(p.stock)} ${p.stock} left</span></div>`).join("") || `<p class="hint">All products are well stocked.</p>`}</section>
+      </div>
+      <div class="cols even">
+        <section class="glass card"><h3>Top purchased products</h3>${bars(top)}</section>
+        <section class="glass card"><h3>Monthly salary by employee</h3>${bars(em.map(e => [e.name, e.salary, inr(e.salary)]))}</section>
+      </div>`;
+  }
+
+  // ---- list pages ----
+  const lists = {
+    customers: { noun: "customer", fields: [["name", "Customer name", "text"], ["product", "Product purchased", "text"], ["date", "Visit date", "date"]],
+      cols: ["Customer", "Product purchased", "Visit date"], cells: c => [nameCell(c.name), esc(c.product), esc(c.date || "—")],
+      stats: l => { const wk = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+        return [["Total customers", l.length], ["Different products bought", new Set(l.map(x => x.product)).size], ["Visited in last 7 days", l.filter(x => x.date >= wk).length]]; } },
+    products: { noun: "product", fields: [["name", "Product name", "text"], ["price", "Price (₹)", "number"], ["stock", "Stock", "number"]],
+      cols: ["Product", "Price", "Stock", "Status"], cells: p => [nameCell(p.name), inr(p.price), p.stock, stockPill(p.stock)],
+      stats: l => [["Products", l.length], ["Units in stock", sum(l, "stock")], ["Low stock items", l.filter(p => p.stock <= 15).length],
+        ["Inventory value", inr(l.reduce((a, p) => a + p.price * p.stock, 0))]] },
+    employees: { noun: "employee", fields: [["name", "Employee name", "text"], ["salary", "Monthly salary (₹)", "number"]],
+      cols: ["Employee", "Monthly salary", "Yearly salary"], cells: e => [nameCell(e.name), inr(e.salary), inr(e.salary * 12)],
+      stats: l => [["Employees", l.length], ["Monthly payroll", inr(sum(l, "salary"))], ["Yearly payroll", inr(sum(l, "salary") * 12)]] }
+  };
+
+  async function showList(kind) {
+    const c = lists[kind], data = await api("/" + kind);
+    $("view").innerHTML = `
+      <div class="tiles">${c.stats(data).map((s, i) => `<div class="tile t${i + 1}"><b>${s[1]}</b><span>${s[0]}</span></div>`).join("")}</div>
+      <div class="cols">
+        <section class="glass card"><div class="row"><h3>All ${kind}</h3><input id="flt" placeholder="Search ${kind}…" value="${esc(filterText)}" aria-label="Search ${kind}"></div><div id="tbl"></div></section>
+        <section class="glass card"><h3>Add ${c.noun}</h3><form class="stack" id="addForm">
+          ${c.fields.map(f => `<label>${f[1]}<input name="${f[0]}" type="${f[2]}" ${f[2] === "number" ? 'min="0" step="any"' : ""} required></label>`).join("")}
+          <button class="add" type="submit">Add ${c.noun}</button></form></section>
+      </div>`;
+    const draw = () => {
+      const q = $("flt").value.toLowerCase();
+      $("tbl").innerHTML = table([...c.cols, ""], data.filter(x => Object.values(x).join(" ").toLowerCase().includes(q)).map(x =>
+        `<tr>${c.cells(x).map(t => `<td>${t}</td>`).join("")}<td><button class="del" onclick="removeItem('${kind}',${x.id})" aria-label="Delete ${esc(x.name)}">✕</button></td></tr>`).join(""));
+    };
+    $("flt").oninput = draw; draw(); filterText = "";
+    $("addForm").onsubmit = async e => {
+      e.preventDefault(); const body = {};
+      c.fields.forEach(f => { const v = e.target[f[0]].value; body[f[0]] = f[2] === "number" ? Number(v) : v; });
+      try { await api("/" + kind, "POST", body); toast(c.noun[0].toUpperCase() + c.noun.slice(1) + " added"); showList(kind); }
+      catch (err) { toast(err.message); }
+    };
+  }
+  async function removeItem(kind, id) {
+    try { await api(`/${kind}/${id}`, "DELETE"); toast("Deleted"); showList(kind); } catch (e) { toast(e.message); }
+  }
+
+  // ---- profile ----
+  async function showProfile() {
+    $("view").innerHTML = `
+      <div class="cols even">
+        <section class="glass card" style="text-align:center"><div class="avatar huge">${esc(me.name[0].toUpperCase())}</div>
+          <h3 style="margin-bottom:4px">${esc(me.name)}</h3><p class="hint" style="margin:0">${esc(me.shop || "Add your shop name")}</p><p class="hint">${esc(me.email)}</p></section>
+        <section class="glass card"><h3>Edit details</h3><form class="stack" id="f">
+          <label>Name<input name="name" value="${esc(me.name)}" required></label>
+          <label>Email<input value="${esc(me.email)}" readonly></label>
+          <label>Shop name<input name="shop" value="${esc(me.shop)}"></label>
+          <label>Phone<input name="phone" value="${esc(me.phone)}"></label>
+          <button class="add" type="submit">Save profile</button></form></section>
+      </div>`;
+    $("f").onsubmit = async e => {
+      e.preventDefault(); const t = e.target;
+      try { me = await api("/me", "PUT", { name: t.name.value, shop: t.shop.value, phone: t.phone.value }); toast("Profile saved"); route(); }
+      catch (err) { toast(err.message); }
+    };
+  }
+
+  // ---- login / signup (full-page, no sidebar) ----
+  function authPage(form) {
+    $("root").className = "";
+    $("root").innerHTML = `<div class="authwrap"><div class="hero"><div class="brand" style="padding:0">GlassCRM</div>
+      <h1>Your shop, customers and team in one place.</h1>
+      <p>See who bought what, what is left on the shelf and who is on payroll, without a spreadsheet.</p></div>${form}</div>`;
+  }
+  function showLogin() {
+    authPage(`<form class="glass authform stack" id="f"><div><h2>Log in</h2><p class="hint" style="margin:4px 0 0">Demo account: demo@shop.com / demo123</p></div>
+      <label>Email<input name="email" type="email" required></label><label>Password<input name="password" type="password" required></label>
+      <button class="add" type="submit">Log in</button><div class="alt">New here? <a href="#/signup">Create an account</a></div></form>`);
+    $("f").onsubmit = async e => {
+      e.preventDefault();
+      try { const r = await api("/login", "POST", { email: e.target.email.value, password: e.target.password.value });
+        token = r.token; sessionStorage.setItem("token", token); location.hash = "#/dashboard"; }
+      catch (err) { toast(err.message); }
+    };
+  }
+  function showSignup() {
+    authPage(`<form class="glass authform stack" id="f"><div><h2>Create account</h2><p class="hint" style="margin:4px 0 0">Set up your shop in a minute.</p></div>
+      <label>Your name<input name="name" required></label><label>Shop name<input name="shop"></label>
+      <label>Email<input name="email" type="email" required></label><label>Password (6+ characters)<input name="password" type="password" minlength="6" required></label>
+      <button class="add" type="submit">Sign up</button><div class="alt">Already registered? <a href="#/login">Log in</a></div></form>`);
+    $("f").onsubmit = async e => {
+      e.preventDefault(); const t = e.target;
+      try { await api("/signup", "POST", { name: t.name.value, shop: t.shop.value, email: t.email.value, password: t.password.value });
+        toast("Account created. Please log in."); location.hash = "#/login"; }
+      catch (err) { toast(err.message); }
+    };
+  }
+
+  // ---- routing ----
+  async function route() {
+    document.body.classList.remove("menu");
+    const page = (location.hash || "").replace("#/", "") || (token ? "dashboard" : "login");
+    if (!token && titles[page]) { location.hash = "#/login"; return; }
+    if (token && (page === "login" || page === "signup")) { location.hash = "#/dashboard"; return; }
+    try {
+      if (page === "login") return showLogin();
+      if (page === "signup") return showSignup();
+      if (!titles[page]) { location.hash = token ? "#/dashboard" : "#/login"; return; }
+      me = me || await api("/me");
+      shell(page);
+      if (page === "dashboard") await showDashboard(); else if (page === "profile") await showProfile(); else await showList(page);
+    } catch (e) { toast(e.message); }
+  }
+  window.addEventListener("hashchange", route);
+  route();
+</script>
+</body>
+</html>
